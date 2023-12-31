@@ -1,0 +1,26 @@
+[project]
+name = "localcq"
+version = "0.1"
+description = "Run locally a code quality pipeline and get the result as a static webpage"
+authors = [{ name = "Louis Pujol", email = "louispujol@laposte.net" }]
+dependencies = [
+    "genbadge[all]",
+    "pytest",
+    "pytest-html",
+    "pytest-cov",
+    "flake8",
+    "flake8-html",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"mypkg.templates" = ["*.html"]
+
+[project.scripts]
+local-cq = "localcq:main"

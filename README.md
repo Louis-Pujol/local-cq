@@ -1,5 +1,5 @@
 # local-cq
-Command-line tool to generate a static webpage with pytest/coverage/flake8 reports
+A command-line tool to generate a static webpage with pytest/coverage/flake8 reports
 
 ## Installation
 

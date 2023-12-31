@@ -1,5 +1,5 @@
 # local-cq
-Run locally a code quality pipeline and get the result as a static webpage
+Command-line tool to generate a static webpage with pytest/coverage/flake8 reports
 
 ## Installation
 
@@ -18,4 +18,4 @@ local-cq --source src/ --tests tests/
 
 After it, a new folder called `cq-report` is created, you can open `cq-report/index.html` with a web browser. You have an overview with the badges and you have access to the reports by following the links.
 
-!()[cq.png]
+![](cq.png)

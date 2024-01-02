@@ -4,8 +4,10 @@ import argparse
 
 quality_report_folder = "cq-report"
 
+
 def run_command(command):
     os.system(command)
+
 
 def move_files(source, destination):
     os.makedirs(destination, exist_ok=True)
@@ -13,13 +15,26 @@ def move_files(source, destination):
         os.rename(source, os.path.join(destination, source))
         print(f"{source} moved to {destination}")
 
+
 def main():
-    package_directory = os.path.dirname(__file__)  # Get the directory of the current script
+    package_directory = os.path.dirname(
+        __file__
+    )  # Get the directory of the current script
     index_path = os.path.join(package_directory, "templates", "index.html")
 
-    parser = argparse.ArgumentParser(description='Generate reports for a Python project.')
-    parser.add_argument('--source', help='Path to the source directory', required=True)
-    parser.add_argument('--tests', help='Path to the tests directory', required=True)
+    parser = argparse.ArgumentParser(
+        description="Generate reports for a Python project."
+    )
+    parser.add_argument(
+        "--source",
+        help="Path to the source directory",
+        required=True
+        )
+    parser.add_argument(
+        "--tests",
+        help="Path to the tests directory",
+        required=True
+        )
     args = parser.parse_args()
 
     src_directory = args.source
@@ -27,30 +42,24 @@ def main():
 
     # Run pytest with specified arguments
     pytest_args = [
-        f"--junitxml=reports/junit/junit.xml",
-        f"--html=reports/junit/report.html",
+        "--junitxml=reports/junit/junit.xml",
+        "--html=reports/junit/report.html",
         f"--cov={src_directory}",
-        f"{tests_directory}"
+        "--cov-report=html:reports/coverage/htmlcov",
+        "--cov-report=xml:reports/coverage/coverage.xml",
+        f"{tests_directory}",
     ]
     run_command(f"pytest {' '.join(pytest_args)}")
 
-    # Generate coverage report
-    run_command("coverage report")
-    run_command("coverage xml")
-    run_command("coverage html")
-
-    print(os.listdir("."))
-
-    # Move coverage files to designated directory
-    os.makedirs("reports/coverage", exist_ok=True)
-    os.rename("coverage.xml", "reports/coverage/coverage.xml")
-    if os.path.exists("reports/coverage/htmlcov"):
-        shutil.rmtree("reports/coverage/htmlcov")
-    os.rename("htmlcov", "reports/coverage/htmlcov")
-    run_command("rm -f reports/coverage/htmlcov/.gitignore")
-
     # Run Flake8 with specified arguments
-    run_command(f"flake8 {src_directory} --exit-zero --statistics --format=html --htmldir ./reports/flake8 --tee --output-file flake8stats.txt")
+    flake8_args = [
+        "--exit-zero",
+        "--statistics",
+        "--format=html --htmldir=reports/flake8",
+        "--tee --output-file=flake8stats.txt",
+        f"{src_directory}",
+    ]
+    run_command(f"flake8 {' '.join(flake8_args)}")
 
     # Generate badges using genbadge
     run_command("genbadge coverage")
@@ -64,7 +73,11 @@ def main():
     if not os.path.exists(quality_report_folder):
         os.makedirs(quality_report_folder)
 
-    badges_to_move = ["coverage-badge.svg", "tests-badge.svg", "flake8-badge.svg"]
+    badges_to_move = [
+        "coverage-badge.svg",
+        "tests-badge.svg",
+        "flake8-badge.svg"
+        ]
     for badge in badges_to_move:
         if os.path.exists(badge):
             os.rename(badge, os.path.join(quality_report_folder, badge))
@@ -77,6 +90,10 @@ def main():
 
     os.rename("reports", quality_report_folder + "/reports")
     print(f"reports folder moved to {quality_report_folder}")
+
+    import webbrowser
+    webbrowser.open_new_tab(f"{quality_report_folder}/index.html")
+
 
 if __name__ == "__main__":
     main()

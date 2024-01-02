@@ -25,16 +25,8 @@ def main():
     parser = argparse.ArgumentParser(
         description="Generate reports for a Python project."
     )
-    parser.add_argument(
-        "--source",
-        help="Path to the source directory",
-        required=True
-        )
-    parser.add_argument(
-        "--tests",
-        help="Path to the tests directory",
-        required=True
-        )
+    parser.add_argument("--source", help="Path to the source directory", required=True)
+    parser.add_argument("--tests", help="Path to the tests directory", required=True)
     args = parser.parse_args()
 
     src_directory = args.source
@@ -51,23 +43,34 @@ def main():
     ]
     run_command(f"pytest {' '.join(pytest_args)}")
 
-    # Run Flake8 with specified arguments
-    flake8_args = [
-        "--exit-zero",
-        "--statistics",
-        "--format=html --htmldir=reports/flake8",
-        "--tee --output-file=flake8stats.txt",
-        f"{src_directory}",
-    ]
-    run_command(f"flake8 {' '.join(flake8_args)}")
-
-    # Generate badges using genbadge
     run_command("genbadge coverage")
     run_command("genbadge tests")
-    run_command("genbadge flake8 -i - < flake8stats.txt")
 
-    # Move flake8stats.txt to reports/flake8
-    os.rename("flake8stats.txt", "reports/flake8/flake8stats.txt")
+    # Run Flake8 with specified arguments
+
+    for folder, name in [
+        (src_directory, "source"),
+        (tests_directory, "tests"),
+    ]:
+        os.makedirs(f"reports/flake8/{name}", exist_ok=True)
+
+        flake8_args = [
+            "--exit-zero",
+            "--statistics",
+            f"--format=html --htmldir=reports/flake8/{name}/",
+            "--tee --output-file=flake8stats.txt",
+            f"{folder}",
+        ]
+        run_command(f"flake8 {' '.join(flake8_args)}")
+
+        # Generate badges using genbadge
+        run_command("genbadge flake8 -i - < flake8stats.txt")
+
+        # Move flake8stats.txt to reports/flake8
+        assert "flake8stats.txt" in os.listdir()
+
+        shutil.move("flake8stats.txt", f"reports/flake8/{name}/")
+        os.rename("flake8-badge.svg", f"flake8-badge-{name}.svg")
 
     # Move badges and reports to designated directories
     if not os.path.exists(quality_report_folder):
@@ -76,8 +79,9 @@ def main():
     badges_to_move = [
         "coverage-badge.svg",
         "tests-badge.svg",
-        "flake8-badge.svg"
-        ]
+        "flake8-badge-source.svg",
+        "flake8-badge-tests.svg",
+    ]
     for badge in badges_to_move:
         if os.path.exists(badge):
             os.rename(badge, os.path.join(quality_report_folder, badge))
@@ -90,6 +94,11 @@ def main():
 
     os.rename("reports", quality_report_folder + "/reports")
     print(f"reports folder moved to {quality_report_folder}")
+
+    # Add a .gitingore file to the quality_report_folder
+
+    with open(f"{quality_report_folder}/.gitignore", "w") as f:
+        f.write("*")
 
     import webbrowser
     webbrowser.open_new_tab(f"{quality_report_folder}/index.html")
